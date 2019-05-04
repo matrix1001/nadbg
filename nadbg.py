@@ -178,6 +178,11 @@ if __name__ == '__main__':
     nadbg = NADBG()
     interval = DEFAULT_INTERVAL
     def set_value(key, val):
+        '''set global values.
+        args:
+            key: key
+            val: val
+        '''
         key_to_obj = {
             'interval': (interval, int),
         }
@@ -189,6 +194,10 @@ if __name__ == '__main__':
 
 
     def attach(s):
+        '''attach to a process. name and pid are supported
+        args:
+            s: a binary name or its pid, also support path
+        '''
         pid = nadbg.attach(s)
         if pid == 0:
             print('attach {} failed'.format(s))
@@ -196,6 +205,12 @@ if __name__ == '__main__':
             print('attach {} success. pid: {}'.format(s, pid))
 
     def watch(addr, typ, size):
+        '''set memory watch point for the attached process.
+        args:
+            addr: the address you want to set watch point. (e.g. 0x602010  0x7fff8b4000)
+            typ: supported type -- byte str int dword qword ptr size_t
+            size: total_size = sizeof(typ) * size
+        '''
         if addr.startswith('0x'):
             addr = int(addr[2:], 16)
         else:
@@ -208,10 +223,15 @@ if __name__ == '__main__':
 
 
     def watcher_print():
+        '''print out all watch point information. no args needed.
+        '''
         nadbg.check()
         print(nadbg.mem_watcher.get_msg())
 
     def print_forever():
+        '''print out all watch point information when there is a change.
+        use `set interval 0.5` to let it check each 0.5 sec. default is 1.
+        '''
         pre_msg = ''
         while True:
             nadbg.check()
@@ -221,6 +241,11 @@ if __name__ == '__main__':
                 print(msg)
                 print('')
             sleep(interval)
+    
+    def prompt_status():
+        return nadbg.s
+
+
 
     ui = CLUI('nadbg')
     ui.commands['set'] = set_value
@@ -228,5 +253,6 @@ if __name__ == '__main__':
     ui.commands['watch'] = watch
     ui.commands['print'] = watcher_print
     ui.commands['print_forever'] = print_forever
+    ui.prompt_status = prompt_status
 
     ui.run()

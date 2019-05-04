@@ -12,6 +12,7 @@ import six
 from time import sleep
  
 
+# these codes for debug
 from IPython import embed
 import traceback as tb
 import sys
@@ -70,7 +71,10 @@ class CLUI(object):
             command_name, args = line.split()[0], line.split()[1:]
             if command_name in self.commands.keys():
                 command_func = self.commands[command_name]
-                return command_func(*args)
+                try:
+                    return command_func(*args)
+                except TypeError as e:
+                    return str(e) + '\n' + self.help(command_name)
             else:
                 return 'no such command "{}"\n\n'.format(command_name) + self.help()
             
@@ -79,17 +83,22 @@ class CLUI(object):
         
     def help(self, *args):
         "print help message"
-        msg = '?: alias of help\n!: execve shell command\n%: exec python script\nctrl+d: exit\nctrl+c: stop command\n'
+        msg = ''
         if args == (): 
+            msg = '?: alias of help\n!: execve shell command\n%: exec python script\nctrl+d: exit\nctrl+c: stop command\n'
             args = self.commands.keys()
         for command in args:
             if command in self.commands.keys():
                 doc = self.commands[command].__doc__
                 if doc:
-                    indent = '\n' + ' ' * len('{}: '.format(command))
-                    lines = doc.splitlines()
-                    stripped = indent.join([line.strip() for line in lines])
-                    msg += '{}: {}\n'.format(command, stripped)
+                    if '\n' not in doc:
+                        msg += '{}: {}\n'.format(command, doc)
+                    else:
+                        indent = '\n    '
+                        lines = doc.splitlines()
+                        old_indent = lines[1].replace(lines[1].strip(), '')
+                        stripped = indent.join([line.replace(old_indent, '') for line in lines])
+                        msg += '{}: {}\n'.format(command, stripped)
                 else:
                     msg += '{}: {}\n'.format(command, "not documented")
             else:
