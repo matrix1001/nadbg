@@ -12,7 +12,7 @@ import six
 from time import sleep
 import traceback as tb
 
-        
+ 
 class CLUI(object):
     def __init__(self, name=''):
         self.name = name
@@ -23,6 +23,30 @@ class CLUI(object):
         self.prompt_status = None
         self.alias = {'?':'help'}
     
+    def setup_readline(self):
+        try:
+            import readline
+            import atexit
+            history_file = "./.{}_history".format(self.name)
+            if not os.path.exists(history_file):
+                open(history_file, 'a+').close()
+
+            readline.read_history_file(history_file)
+            # readline.set_history_length(history_length)
+            atexit.register(readline.write_history_file, history_file)
+
+            readline.parse_and_bind('set enable-keypad on')
+
+            readline.set_completer(self.complete)
+            readline.set_completer_delims(' \t\n;')
+            readline.parse_and_bind("tab: complete")
+        except:
+            pass
+    
+    def complete(self, text, state):
+        candidates = [x for x in self.commands.keys() + self.alias.keys() if x.startswith(text)]
+        return candidates[state] + ' '
+
     def get_prompt(self):
         pre = '[{}] '.format(self.name)
         if self.prompt_status:
@@ -31,6 +55,7 @@ class CLUI(object):
             return pre + '> '
 
     def run(self):
+        self.setup_readline()
         while True:
             try:
                 prompt = self.get_prompt()
