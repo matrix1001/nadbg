@@ -10,15 +10,18 @@ import subprocess
 import time 
 import six
 from time import sleep
- 
+import traceback as tb
 
         
 class CLUI(object):
     def __init__(self, name=''):
         self.name = name
-        self.commands = {'help':self.help}
+        self.commands = {
+            'help':self.help,
+            'exit':self.exit,
+        }
         self.prompt_status = None
-        self.alias = {}
+        self.alias = {'?':'help'}
     
     def get_prompt(self):
         pre = '[{}] '.format(self.name)
@@ -56,11 +59,6 @@ class CLUI(object):
                 six.exec_(line[1:], locals(), globals())
             except Exception as e:
                 return str(e)
-
-        elif line[0] == '?':
-            return self.help()
-        elif line == 'exit':
-            exit()
         else:
             command_name, args = line.split()[0], line.split()[1:]
             if command_name in self.commands.keys():
@@ -68,17 +66,26 @@ class CLUI(object):
                 try:
                     return command_func(*args)
                 except TypeError as e:
+                    # argument error
                     return str(e) + '\n' + self.help(command_name)
+                except RuntimeError as e:
+                    # just need to stop
+                    return str(e)
+                except Exception as e:
+                    # other exception
+                    return tb.format_exc()
             elif command_name in self.alias:
                 new_line = line.replace(command_name, self.alias[command_name], 1) + ' '
-                #embed()
                 return self._handler(new_line)
             else:
                 return 'no such command "{}"\n\n'.format(command_name) + self.help()
-            
+
     def _execve(self, cmd):
         return os.popen(cmd).read()
-        
+
+    def exit(self):
+        exit()
+
     def help(self, *args):
         "print help message"
         msg = ''

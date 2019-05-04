@@ -172,10 +172,10 @@ class NADBG(object):
 
     def set_pid(self, pid):
         self.pid = pid
-        self.check()
+        self.do_check()
         self.mem_watcher.set_pid(pid)
 
-    def check(self):
+    def do_check(self):
         if not os.access('/proc/{}/mem'.format(self.pid), os.R_OK):
             print('process {} died or not readable'.format(self.pid))
             if self.s:
@@ -184,7 +184,7 @@ class NADBG(object):
                 if pid:
                     print('reattaching success. pid: {}'.format(pid))
                 else:
-                    print('reattaching failed.')
+                    raise RuntimeError('reattaching failed.')
             else:
                 self.pid = 0
 
@@ -240,7 +240,7 @@ if __name__ == '__main__':
     def watcher_print():
         '''print out all watch point information. no args needed.
         '''
-        nadbg.check()
+        nadbg.do_check()
         print(nadbg.mem_watcher.get_msg())
 
     def print_forever():
@@ -249,7 +249,7 @@ if __name__ == '__main__':
         '''
         pre_msg = ''
         while True:
-            nadbg.check()
+            nadbg.do_check()
             msg = nadbg.mem_watcher.get_msg()
             if msg != pre_msg:
                 pre_msg = msg
