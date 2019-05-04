@@ -9,6 +9,17 @@ from proc import getpids
 DEFAULT_INTERVAL = 1
 
 
+# these codes for debug
+from IPython import embed
+import traceback as tb
+import sys
+def excepthook(type, value, traceback):
+    tb.print_last()
+    embed()
+sys.excepthook = excepthook
+
+
+
 def get_int(_min, _max, prompt=''):
     while True:
         s = input(prompt)
@@ -166,10 +177,14 @@ class NADBG(object):
 
     def check(self):
         if not os.access('/proc/{}/mem'.format(self.pid), os.R_OK):
-            print('process {} died or not readable')
+            print('process {} died or not readable'.format(self.pid))
             if self.s:
                 print('trying to reattach to {}'.format(self.s))
-                self.attach(self.s)
+                pid = self.attach(self.s)
+                if pid:
+                    print('reattaching success. pid: {}'.format(pid))
+                else:
+                    print('reattaching failed.')
             else:
                 self.pid = 0
 
@@ -204,11 +219,11 @@ if __name__ == '__main__':
         else:
             print('attach {} success. pid: {}'.format(s, pid))
 
-    def watch(addr, typ, size):
+    def watch(typ, addr, size):
         '''set memory watch point for the attached process.
         args:
-            addr: the address you want to set watch point. (e.g. 0x602010  0x7fff8b4000)
             typ: supported type -- byte str int dword qword ptr size_t
+            addr: the address you want to set watch point. (e.g. 0x602010  0x7fff8b4000)
             size: total_size = sizeof(typ) * size
         '''
         if addr.startswith('0x'):
@@ -254,5 +269,14 @@ if __name__ == '__main__':
     ui.commands['print'] = watcher_print
     ui.commands['print_forever'] = print_forever
     ui.prompt_status = prompt_status
+
+    ui.alias['wb'] = 'watch byte'
+    ui.alias['ws'] = 'watch str'
+    ui.alias['wd'] = 'watch dword'
+    ui.alias['wq'] = 'watch qword'
+
+    ui.alias['at'] = 'attach'
+    ui.alias['p'] = 'print'
+    ui.alias['q'] = 'exit'
 
     ui.run()

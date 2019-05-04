@@ -12,21 +12,13 @@ import six
 from time import sleep
  
 
-# these codes for debug
-from IPython import embed
-import traceback as tb
-import sys
-def excepthook(type, value, traceback):
-    tb.print_last()
-    embed()
-sys.excepthook = excepthook
-
         
 class CLUI(object):
     def __init__(self, name=''):
         self.name = name
         self.commands = {'help':self.help}
         self.prompt_status = None
+        self.alias = {}
     
     def get_prompt(self):
         pre = '[{}] '.format(self.name)
@@ -64,9 +56,11 @@ class CLUI(object):
                 six.exec_(line[1:], locals(), globals())
             except Exception as e:
                 return str(e)
-  
+
         elif line[0] == '?':
             return self.help()
+        elif line == 'exit':
+            exit()
         else:
             command_name, args = line.split()[0], line.split()[1:]
             if command_name in self.commands.keys():
@@ -75,6 +69,10 @@ class CLUI(object):
                     return command_func(*args)
                 except TypeError as e:
                     return str(e) + '\n' + self.help(command_name)
+            elif command_name in self.alias:
+                new_line = line.replace(command_name, self.alias[command_name], 1) + ' '
+                #embed()
+                return self._handler(new_line)
             else:
                 return 'no such command "{}"\n\n'.format(command_name) + self.help()
             
@@ -103,7 +101,9 @@ class CLUI(object):
                     msg += '{}: {}\n'.format(command, "not documented")
             else:
                 msg += '{}: {}\n'.format(command, 'unkown command')
-            
+        
+        for alia in self.alias:
+            msg += '{} (alias): {}\n'.format(alia, self.alias[alia])
         return msg
 
 if __name__ == '__main__':
