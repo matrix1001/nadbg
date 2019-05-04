@@ -65,7 +65,7 @@ class CLUI(object):
                 command_func = self.commands[command_name]
                 try:
                     return command_func(*args)
-                except TypeError as e:
+                except (TypeError, ValueError) as e:
                     # argument error
                     return str(e) + '\n' + self.help(command_name)
                 except RuntimeError as e:
@@ -91,6 +91,8 @@ class CLUI(object):
         msg = ''
         if args == (): 
             msg = '?: alias of help\n!: execve shell command\n%: exec python script\nctrl+d: exit\nctrl+c: stop command\n'
+            for alia in self.alias:
+                msg += '{} (alias): {}\n'.format(alia, self.alias[alia])
             args = self.commands.keys()
         for command in args:
             if command in self.commands.keys():
@@ -102,15 +104,12 @@ class CLUI(object):
                         indent = '\n    '
                         lines = doc.splitlines()
                         old_indent = lines[1].replace(lines[1].strip(), '')
-                        stripped = indent.join([line.replace(old_indent, '') for line in lines])
+                        stripped = indent.join([line.replace(old_indent, '', 1) for line in lines])
                         msg += '{}: {}\n'.format(command, stripped)
                 else:
                     msg += '{}: {}\n'.format(command, "not documented")
             else:
                 msg += '{}: {}\n'.format(command, 'unkown command')
-        
-        for alia in self.alias:
-            msg += '{} (alias): {}\n'.format(alia, self.alias[alia])
         return msg
 
 if __name__ == '__main__':
@@ -129,9 +128,13 @@ if __name__ == '__main__':
     
     def error_test():
         return 1/0
+    
+    def error_test2():
+        raise ValueError('test value error')
         
     c.prompt_status = prompt_status
     c.commands['printf'] = printf
     c.commands['mycommand'] = mycommand
     c.commands['error'] = error_test
+    c.commands['e2'] = error_test2
     c.run()
