@@ -116,9 +116,9 @@ class CLUI(object):
         msg = ''
         if args == (): 
             msg = '?: alias of help\n!: execve shell command\n%: exec python script\nctrl+d: exit\nctrl+c: stop command\n'
-            for alia in self.alias:
+            for alia in sorted(self.alias.keys()):
                 msg += '{} (alias): {}\n'.format(alia, self.alias[alia])
-            args = self.commands.keys()
+            args = sorted(self.commands.keys())
         for command in args:
             if command in self.commands.keys():
                 doc = self.commands[command].__doc__
