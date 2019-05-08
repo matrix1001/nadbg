@@ -1,2 +1,3 @@
 *.pyc
 .gdb_history
+.nadbg_history

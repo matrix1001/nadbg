@@ -27,11 +27,65 @@ def get_int(_min, _max, prompt=''):
         if i >= _min and i <= _max:
             return i
 
-class MemWatcher(object):
+
+
+class MemWatches(object):
     def __init__(self):
-        self.proc = None
-        self.watches = [] # element: (addr, typ, size)
-        self.mem_perline = 16
+        self.list = []
+    def __getitem__(self, i):
+        return self.list[i]
+    @property
+    def count(self):
+        return len(self.list)
+    def add(self, addr, typ, size):
+        watch = (addr, typ, size)
+        self.list.append(watch)
+    def remove(self, addr_or_idx):
+        if addr_or_idx < 0 or self.count == 0:
+            raise ValueError('Invalid watch index {} to remove'.format(addr_or_idx))
+        elif addr_or_idx < self.count:
+            self.list.pop(addr_or_idx)
+            return
+        else:
+            for watch in self.list:
+                addr, typ, size = watch
+                if addr == addr_or_idx:
+                    self.list.remove(watch)
+                    return
+            raise ValueError('Invalid watch addr {:#x} to remove'.format(addr_or_idx))
+
+    
+def memfmt(mem, addr, type_size, perline=16):
+    total_size = len(mem)
+    count = int(total_size / type_size) + int(total_size % type_size != 0)
+
+    fmt = '{:#x}: {}'
+    hex_lst = []
+    for i in range(count):
+        start = type_size * i
+        end = type_size * (i+1)
+        mem_block = mem[start:end][::-1] # little endian
+        hex_lst.append(mem_block.encode('hex'))
+
+    lines = []
+    nline = int(total_size / perline) + int(total_size % perline != 0)
+    nhex = perline / type_size
+    for i in range(nline):
+        start_addr = addr + i * perline
+        start = i * nhex
+        end = (i+1) * nhex
+        if end > len(hex_lst):
+            end = len(hex_lst)
+        mem_str = ' '.join(hex_lst[start:end])
+        lines.append(fmt.format(start_addr, mem_str))
+    return '\n'.join(lines)
+
+
+class NADBG(object):
+    def __init__(self):
+        self.pid = 0
+        self.s = ''
+        self.watches = MemWatches()
 
     def _type_to_memsize(self, typ):
         type_to_memsize = {
@@ -48,90 +102,29 @@ class MemWatcher(object):
         type_to_memsize['ptr'] = type_to_memsize['size_t']
         return type_to_memsize[typ]
 
-    def _get_global_info(self):
-        return 'number of watches: {}'.format(len(self.watches))
+    @property
+    def proc(self):
+        if self.pid == 0:
+            return None
+        else:
+            return Proc(self.pid)
 
-    def get_msg(self):
-        def _parse_watch(watch):
-            def _mem_chk(addr, size):
-                return True
+    @property
+    def watches_info(self):
+        contents = []
+        for idx, watch in enumerate(self.watches):
             addr, typ, size = watch
             typ_size = self._type_to_memsize(typ)
-            total_size = typ_size * size
-            banner = '{:#x} {} {}\n'.format(addr, typ, size)
-            if _mem_chk(addr, total_size):
-                fmt = '{:#x}: {}'
-                mem = self.proc.read(addr, total_size)
-                if typ == 'str':
-                    return banner + fmt.format(addr, repr(mem))
-                else:
-                    hex_lst = []
-                    for i in range(size):
-                        start = typ_size*i
-                        end = typ_size*(i+1)
-                        mem_block = mem[start:end][::-1] # little endian
-                        hex_lst.append(mem_block.encode('hex'))
-
-                    msg_lst = []
-                    nline = total_size / self.mem_perline + bool(total_size % self.mem_perline)
-                    nhex = self.mem_perline / typ_size
-                    for i in range(nline):
-                        start_addr = addr + i * self.mem_perline
-                        start = i * nhex
-                        end = (i+1) * nhex
-                        if end > len(hex_lst):
-                            end = len(hex_lst)
-                        mem_str = ' '.join(hex_lst[start:end])
-                        msg_lst.append(fmt.format(start_addr, mem_str))
-
-                    return banner + '\n'.join(msg_lst)
-
+            total = size * typ_size
+            mem = self.proc.read(addr, total)
+            if typ == 'str':
+                content = '[{}] {} {}\n'.format(idx, size, typ) 
+                content += '{:#x}: {}'.format(addr, repr(mem))
             else:
-                print("illegle mem area: {}-{}".format(addr, addr + total_size))
-                return ''
+                content = '[{}] {} {}\n'.format(idx, size, typ) + memfmt(mem, addr, typ_size)
+            contents.append(content)
+        return '\n'.join(contents)
 
-        msg_lst = []
-        msg_lst.append(self._get_global_info())
-        for watch in self.watches:
-            msg_lst.append(_parse_watch(watch))
-        return '\n'.join(msg_lst)
-
-    def add_watch(self, watch):
-        def _chk_watch(watch):
-            return True
-
-        if _chk_watch(watch):
-            self.watches.append(watch)
-        else:
-            print('invalid watch')
-
-    def remove_watch(self, wid):
-        def _chk_wid(wid):
-            if wid < 0 or wid >= len(self.watches):
-                return False
-            else:
-                return True
-
-        if _chk_wid(wid):
-            self.watches.__delitem__(wid)
-        else:
-            print('invalid watch id')
-
-    def set_pid(self, pid):
-        def _chk_pid(pid):
-            return True
-
-        if _chk_pid(pid):
-            self.proc = Proc(pid)
-        else:
-            print('invalid pid')
-
-
-class NADBG(object):
-    def __init__(self):
-        self.pid = 0
-        self.s = ''
-        self.mem_watcher = MemWatcher()
 
     def attach(self, s):
         self.s = s
@@ -173,7 +166,6 @@ class NADBG(object):
     def set_pid(self, pid):
         self.pid = pid
         self.do_check()
-        self.mem_watcher.set_pid(pid)
 
     def do_check(self):
         if not os.access('/proc/{}/mem'.format(self.pid), os.R_OK):
@@ -234,14 +226,14 @@ if __name__ == '__main__':
             size = int(size[2:], 16)
         else:
             size = int(size)
-        nadbg.mem_watcher.add_watch((addr, typ, size))
+        nadbg.watches.add(addr, typ, size)
 
 
     def watcher_print():
         '''print out all watch point information. no args needed.
         '''
         nadbg.do_check()
-        print(nadbg.mem_watcher.get_msg())
+        print(nadbg.watches_info)
 
     def print_forever():
         '''print out all watch point information when there is a change.
@@ -250,7 +242,7 @@ if __name__ == '__main__':
         pre_msg = ''
         while True:
             nadbg.do_check()
-            msg = nadbg.mem_watcher.get_msg()
+            msg = nadbg.watches_info
             if msg != pre_msg:
                 pre_msg = msg
                 print(msg)
