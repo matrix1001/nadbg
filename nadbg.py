@@ -222,7 +222,7 @@ if __name__ == '__main__':
         else:
             print('attach {} success. pid: {}'.format(s, pid))
 
-    def watch(typ, addr, size=1):
+    def watch(typ, addr, size='1'):
         '''set memory watch point for the attached process.
         args:
             typ: supported type -- byte str int dword qword ptr size_t
@@ -260,7 +260,7 @@ if __name__ == '__main__':
                 print('')
             sleep(interval)
 
-    def dump(typ, addr, size=1):
+    def dump(typ, addr, size='1'):
         '''dump memory for the attached process.
         args:
             typ: supported type -- byte str int dword qword ptr size_t
