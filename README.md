@@ -4,7 +4,7 @@ Not A Debugger !
 
 But a memory watcher and something more !
 
-Let's have an preview.
+Let's have a preview.
 
 ![demo1](img/1.png)
 

@@ -278,6 +278,31 @@ if __name__ == '__main__':
         nadbg.do_check()
         print(nadbg.memdump(addr, typ, size))
 
+    def vmmap():
+        '''check vmmap for the attached process.
+        '''
+        nadbg.do_check()
+        print('\n'.join([str(map) for map in nadbg.proc.vmmap]))
+
+    def find(s):
+        '''Search in all memory of the attached process.
+
+        args:
+            s: The content to search. use `0x` to search int.
+        '''
+        nadbg.do_check()
+        results = nadbg.proc.search_in_all(s)
+        if not results:
+            print('not found')
+        else:
+            contents = []
+            for idx, ele in enumerate(results):
+                addr, memhex = ele
+                content = '[{}] {:#x}'.format(idx, addr)
+                contents.append(content)
+            print('\n'.join([_ for _ in contents]))
+            
+
     def prompt_status():
         return nadbg.s
 
@@ -290,6 +315,8 @@ if __name__ == '__main__':
     ui.commands['print'] = watcher_print
     ui.commands['print_forever'] = print_forever
     ui.commands['dump'] = dump
+    ui.commands['vmmap'] = vmmap
+    ui.commands['find'] = find
     ui.prompt_status = prompt_status
 
     ui.alias['wb'] = 'watch byte'
