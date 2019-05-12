@@ -103,7 +103,7 @@ class CLUI(object):
                 new_line = line.replace(command_name, self.alias[command_name], 1) + ' '
                 return self._handler(new_line)
             else:
-                return 'no such command "{}"\n\n'.format(command_name) + self.help()
+                return 'no such command `{}`. input `help` to get help message.'.format(command_name)
 
     def _execve(self, cmd):
         return os.popen(cmd).read()

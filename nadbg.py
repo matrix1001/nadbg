@@ -92,6 +92,7 @@ class NADBG(object):
             'byte': 1,
             'str': 1,
             'int': 4,
+            'word': 2,
             'dword': 4,
             'qword': 8,
         }
@@ -125,6 +126,16 @@ class NADBG(object):
             contents.append(content)
         return '\n'.join(contents)
 
+
+    def memdump(self, addr, typ, size):
+        typ_size = self._type_to_memsize(typ)
+        total = size * typ_size
+        mem = self.proc.read(addr, total)
+        if typ == 'str':
+            content = repr(mem)
+        else:
+            content = memfmt(mem, addr, typ_size)
+        return content
 
     def attach(self, s):
         self.s = s
@@ -211,7 +222,7 @@ if __name__ == '__main__':
         else:
             print('attach {} success. pid: {}'.format(s, pid))
 
-    def watch(typ, addr, size):
+    def watch(typ, addr, size=1):
         '''set memory watch point for the attached process.
         args:
             typ: supported type -- byte str int dword qword ptr size_t
@@ -248,7 +259,25 @@ if __name__ == '__main__':
                 print(msg)
                 print('')
             sleep(interval)
-    
+
+    def dump(typ, addr, size=1):
+        '''dump memory for the attached process.
+        args:
+            typ: supported type -- byte str int dword qword ptr size_t
+            addr: the address you want to set watch point. (e.g. 0x602010  0x7fff8b4000)
+            size: total_size = sizeof(typ) * size
+        '''
+        if addr.startswith('0x'):
+            addr = int(addr[2:], 16)
+        else:
+            addr = int(addr)
+        if size.startswith('0x'):
+            size = int(size[2:], 16)
+        else:
+            size = int(size)
+        nadbg.do_check()
+        print(nadbg.memdump(addr, typ, size))
+
     def prompt_status():
         return nadbg.s
 
@@ -260,12 +289,20 @@ if __name__ == '__main__':
     ui.commands['watch'] = watch
     ui.commands['print'] = watcher_print
     ui.commands['print_forever'] = print_forever
+    ui.commands['dump'] = dump
     ui.prompt_status = prompt_status
 
     ui.alias['wb'] = 'watch byte'
     ui.alias['ws'] = 'watch str'
+    ui.alias['ww'] = 'watch word'
     ui.alias['wd'] = 'watch dword'
     ui.alias['wq'] = 'watch qword'
+
+    ui.alias['db'] = 'dump byte'
+    ui.alias['ds'] = 'dump str'
+    ui.alias['ww'] = 'dump word'
+    ui.alias['dd'] = 'dump dword'
+    ui.alias['dq'] = 'dump qword'
 
     ui.alias['at'] = 'attach'
     ui.alias['p'] = 'print'
