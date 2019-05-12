@@ -1,14 +1,17 @@
 # nadbg
 
-Not A Debugger !
+nadbg is designed to analyze memory of the Linux process.
 
-But a memory watcher and something more !
+__core feature__
+- ptrace free
+- extensible
+- easy to use
+- blabla......
 
-Let's have a preview.
-
-![demo1](img/1.png)
-
-This project is still in development.
+__future feature__
+- heap analyze
+- ASLR/PIE support
+- blabla......
 
 # usage
 
@@ -20,43 +23,108 @@ python nadbg.py
 
 Use `help` or `?` to get some help.
 
-```raw
-[nadbg] > ?
-ctrl+d: exit
-ctrl+c: stop command
-wd (alias): watch dword
-wb (alias): watch byte
-q (alias): exit
-p (alias): print
-ws (alias): watch str
-at (alias): attach
-wq (alias): watch qword
-? (alias): help
-print_forever: print out all watch point information when there is a change.
-    use `set interval 0.5` to let it check each 0.5 sec. default is 1.
+## attach
 
-set: set global values.
-    args:
-        key: key
-        val: val
+nadbg support `path`, `binary name`, `pid`.
 
-help: print help message
-watch: set memory watch point for the attached process.
-    args:
-        typ: supported type -- byte str int dword qword ptr size_t
-        addr: the address you want to set watch point. (e.g. 0x602010  0x7fff8b4000)
-        size: total_size = sizeof(typ) * size
-
-attach: attach to a process. name and pid are supported
-    args:
-        s: a binary name or its pid, also support path
-
-exit: not documented
-print: print out all watch point information. no args needed.
+```
+[nadbg]  > attach /bin/cat
+/bin/cat not found
+attach /bin/cat failed
 ```
 
-## what for ?
+well, this is a mistake.
 
-- memory watcher (instead of `x /gx` in gdb)
-- heap analyzer (not implemented yet)
-- other
+```
+[nadbg] /bin/cat > attach /usr/bin/cat
+attach /usr/bin/cat success. pid: 10696
+[nadbg] /usr/bin/cat >
+```
+
+```
+[nadbg]  > attach cat
+attach cat success. pid: 10696
+[nadbg] cat >
+```
+
+```
+[nadbg]  > attach 10696
+attach 10696 success. pid: 10696
+[nadbg] 10696 >
+```
+
+## memory dump
+
+memory dump is similar to those of `pwndbg`.
+
+```
+[nadbg] /usr/bin/cat > dq 0x7fffffffe270 4
+0x7fffffffe270: 0000000000000001 00007fffffffe588
+0x7fffffffe280: 0000000000000000 00007fffffffe595
+[nadbg] /usr/bin/cat > dd 0x7fffffffe270 4
+0x7fffffffe270: 00000001 00000000 ffffe588 00007fff
+[nadbg] /usr/bin/cat > db 0x7fffffffe270 16
+0x7fffffffe270: 01 00 00 00 00 00 00 00 88 e5 ff ff ff 7f 00 00
+[nadbg] /usr/bin/cat > ds 0x7fffffffe588 13
+'/usr/bin/cat\x00'
+```
+
+## memory search
+
+memory search is similar to that of `peda`.
+
+```
+[nadbg] /usr/bin/cat > find /bin/cat
+[0] 0x7fffffffe58c
+[1] 0x7fffffffefcd
+[2] 0x7fffffffefef
+[nadbg] /usr/bin/cat > find 0x7fffffffe588
+[0] 0x55555555f278
+[1] 0x7fffffffe278
+```
+
+## memory watch
+
+`memory watcher` is designed to scan/print memory.
+
+well, it's designed to free you from `dq`, `dq` and `dq`. :)
+
+```
+[nadbg] /usr/bin/cat > wq 0x7fffffffe278 1
+[nadbg] /usr/bin/cat > ws 0x7fffffffe588 13
+[nadbg] /usr/bin/cat > p
+[0] 1 qword
+0x7fffffffe278: 00007fffffffe588
+[1] 13 str
+0x7fffffffe588: '/usr/bin/cat\x00'
+[nadbg] /usr/bin/cat >
+```
+
+also, there's a loop printer for you. by default, it has a scan interval of 1 sec. it will only print message when the watched memory changed.
+
+```
+[nadbg] /usr/bin/cat > print_forever
+[0] 1 qword
+0x7fffffffe278: 00007fffffffe588
+[1] 13 str
+0x7fffffffe588: '/usr/bin/cat\x00'
+
+[0] 1 qword
+0x7fffffffe278: 00007fffffffe588
+[1] 13 str
+0x7fffffffe588: '\xef\xbe\xad\xde/bin/cat\x00'
+
+[0] 1 qword
+0x7fffffffe278: 00007fffdeadbeef
+[1] 13 str
+0x7fffffffe588: '\xef\xbe\xad\xde/bin/cat\x00'
+
+^C
+KeyboardInterrupt
+```
+
+just use `ctrl + c` to stop it.
+
+## other?
+
+tell me what you want. then i make one for you.
