@@ -1,4 +1,4 @@
-# nadbg
+# nadbg - Not A Debugger
 
 nadbg is designed to analyze memory of the Linux process.
 
@@ -125,6 +125,54 @@ KeyboardInterrupt
 
 just use `ctrl + c` to stop it.
 
+## process info
+
+just some process infomation you need to know.
+
+`info`
+
+```
+[nadbg] cat > info
+process path: /usr/bin/cat
+arch: 64
+libc: /usr/lib/x86_64-linux-gnu/libc-2.28.so
+prog address: 0x555555554000
+libc address: 0x7ffff7dec000
+```
+
+`vmmap`
+
+```
+[nadbg] cat > vmmap
+Map("/usr/bin/cat", 0x555555554000, 0x555555556000, "r--p")
+......
+Map("/usr/lib/x86_64-linux-gnu/libc-2.28.so", 0x7ffff7dec000, 0x7ffff7e0e000, "r--p")
+......
+Map("[stack]", 0x7ffffffde000, 0x7ffffffff000, "rw-p")
+```
+
+`canary`
+
+```
+[nadbg] cat > canary
+0x4456b914aa845400
+```
+
+`address`
+
+```
+[nadbg] cat > info bases
+[vdso]: 0x7ffff7fd3000
+libc: 0x7ffff7dec000
+ld-2.28.so: 0x7ffff7fd5000
+heap: 0x0
+mapped: 0x7ffff7fa9000
+prog: 0x555555554000
+stack: 0x7ffffffde000
+[vvar]: 0x7ffff7fd0000
+```
+
+well, `heap: 0x0` means there is no heap.
 ## other?
 
 tell me what you want. then i make one for you.

@@ -278,11 +278,26 @@ if __name__ == '__main__':
         nadbg.do_check()
         print(nadbg.memdump(addr, typ, size))
 
-    def vmmap():
-        '''check vmmap for the attached process.
+    def psinfo(key=None):
+        '''get process info.
+        args:
+            key: the name of the info.
         '''
         nadbg.do_check()
-        print('\n'.join([str(map) for map in nadbg.proc.vmmap]))
+        if key == 'vmmap':
+            print('\n'.join([str(map) for map in nadbg.proc.vmmap]))
+        elif key == 'bases':
+            print('\n'.join(['{}: {:#x}'.format(base[0], base[1]) for base in nadbg.proc.bases.items()]))
+        elif key == 'canary':
+            print(hex(nadbg.proc.canary))
+        else:
+            info = []
+            info.append('process path: {}'.format(nadbg.proc.path))
+            info.append('arch: {}'.format(nadbg.proc.arch))
+            info.append('libc: {}'.format(nadbg.proc.libc))
+            info.append('prog address: {:#x}'.format(nadbg.proc.bases['prog']))
+            info.append('libc address: {:#x}'.format(nadbg.proc.bases['libc']))
+            print('\n'.join(info)) 
 
     def find(s):
         '''Search in all memory of the attached process.
@@ -315,7 +330,7 @@ if __name__ == '__main__':
     ui.commands['print'] = watcher_print
     ui.commands['print_forever'] = print_forever
     ui.commands['dump'] = dump
-    ui.commands['vmmap'] = vmmap
+    ui.commands['info'] = psinfo
     ui.commands['find'] = find
     ui.prompt_status = prompt_status
 
@@ -330,6 +345,9 @@ if __name__ == '__main__':
     ui.alias['ww'] = 'dump word'
     ui.alias['dd'] = 'dump dword'
     ui.alias['dq'] = 'dump qword'
+
+    ui.alias['vmmap'] = 'info vmmap'
+    ui.alias['canary'] = 'info canary'
 
     ui.alias['at'] = 'attach'
     ui.alias['p'] = 'print'
