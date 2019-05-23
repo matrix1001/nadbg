@@ -163,6 +163,7 @@ class NADBG(object):
             sz = len(candidates)
             if sz == 0:
                 print('{} not found'.format(s))
+                self.set_pid(0)
             elif sz == 1:
                 self.set_pid(candidates[0])
             else:
@@ -176,7 +177,9 @@ class NADBG(object):
 
     def set_pid(self, pid):
         self.pid = pid
-        self.do_check()
+        if pid:
+            self.do_check()
+            self.s = self.proc.path
 
     def do_check(self):
         if not os.access('/proc/{}/mem'.format(self.pid), os.R_OK):
