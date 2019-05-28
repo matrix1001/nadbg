@@ -6,34 +6,33 @@ __core feature__
 - ptrace free
 - extensible
 - easy to use
+- heap analyze (with heapinspect)
 - blabla......
 
 __future feature__
-- heap analyze
+
 - ASLR/PIE support
 - blabla......
 
 # usage
 
-Start this appilication.
+before you use it, execute this.
+```sh
+git submodule init
+```
+
+start this appilication.
 
 ```py
 python nadbg.py
 ```
 
-Use `help` or `?` to get some help.
+use `help` or `?` to get some help.
 
 ## attach
 
 nadbg support `path`, `binary name`, `pid`.
 
-```
-[nadbg]  > attach /bin/cat
-/bin/cat not found
-attach /bin/cat failed
-```
-
-well, this is a mistake.
 
 ```
 [nadbg] /bin/cat > attach /usr/bin/cat
@@ -173,6 +172,32 @@ stack: 0x7ffffffde000
 ```
 
 well, `heap: 0x0` means there is no heap.
+
+## heapinspect
+
+Just use `hi` to print help message. Then use it.
+
+```
+[nadbg] /usr/bin/dash > hi heap
+=========================  HeapInspect  =========================
+libc_version:2.28
+arch:64
+tcache_enable:True
+libc_base:0x7f1e68ab6000
+heap_base:0x563073660000
+
+
+
+(0x80)    entries[6] -> 0x563073660bc0
+(0x210)    entries[31] -> 0x563073660c40
+top: 0x563073660e40
+last_remainder: 0x0
+unsortedbins: None
+[nadbg] /usr/bin/dash >
+```
+
+
+
 ## other?
 
 tell me what you want. then i make one for you.
