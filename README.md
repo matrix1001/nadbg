@@ -18,7 +18,7 @@ __future feature__
 
 before you use it, execute this.
 ```sh
-git submodule init
+git submodule update
 ```
 
 start this appilication.
