@@ -136,7 +136,7 @@ class NADBG(object):
                 else:
                     # s is filename
                     return s == p.name
-            except OSError:
+            except (OSError, IOError):
                 return False
 
         if s.isdigit():
