@@ -2,8 +2,6 @@ import os
 from time import sleep
 from time import ctime
 
-#from proc import Proc
-#from proc import getpids
 from core.proc import Proc, getpids
 
 DEFAULT_INTERVAL = 1
