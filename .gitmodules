@@ -1,3 +1,4 @@
 [submodule "plugins/heapinspect"]
 	path = plugins/heapinspect
 	url = https://github.com/matrix1001/heapinspect.git
+	branch = stable

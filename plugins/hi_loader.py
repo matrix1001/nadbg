@@ -5,7 +5,8 @@ FILE_PATH = os.path.abspath(FILE_PATH)
 if os.path.islink(FILE_PATH):
     FILE_PATH = os.readlink(FILE_PATH)
 DIR_PATH = os.path.dirname(FILE_PATH)
-HEAP_INSPECT_PATH = os.path.join(DIR_PATH, './heapinspect')
+sys.path.insert(0, DIR_PATH)
+HEAP_INSPECT_PATH = os.path.join(DIR_PATH, 'heapinspect')
 sys.path.insert(0, HEAP_INSPECT_PATH)
 from heapinspect.core import *
 from common import common
