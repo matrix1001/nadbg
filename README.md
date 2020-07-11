@@ -21,7 +21,7 @@ before you use it, execute this.
 git submodule update
 ```
 
-start this appilication.
+start this application.
 
 ```py
 python nadbg.py
